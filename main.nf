@@ -52,7 +52,7 @@ if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
   custom_runName = workflow.runName
 }
 
-Channel.fromPath(params.indir)
+Channel.fromPath([params.indir, '*.fna', '*.fa', '*.fasta', '*.fas'])
   .map { file -> tuple(file.baseName, file) }
   .into { genomes }
 
