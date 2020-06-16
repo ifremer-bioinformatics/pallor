@@ -52,9 +52,9 @@ if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
   custom_runName = workflow.runName
 }
 
-Channel.fromPath([params.indir, '*.fna', '*.fa', '*.fasta', '*.fas'])
+Channel.fromPath(params.rawdata_dir)
   .map { file -> tuple(file.baseName, file) }
-  .into { genomes }
+  .set { genomes }
 
 /*
 * PIPELINE INFO
@@ -80,119 +80,102 @@ log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
 log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 // Launch BUSCO and cat all single copy genes into a single file for each specie
-process busco {
+process get_single_copy {
   label 'busco'
   beforeScript "${params.busco_env}"
 
-  publishDir "${params.outdir}/${params.busco_dirname}" , mode: 'copy'
+  publishDir "${params.outdir}/${params.assembly_completness_dirname}" , mode: 'copy', pattern : "${genome_name}/short_summary*"
+  publishDir "${params.outdir}/${params.assembly_completness_dirname}" , mode: 'copy', pattern : "${genome_name}/run_*/*.tsv" , saveAs : { full_table -> "${genome_name}/full_table.tsv" }
+  publishDir "${params.outdir}/${params.assembly_completness_dirname}" , mode: 'copy', pattern : "*.faa"
 
   input:
-    set name, file(fasta) from genomes
+    set genome_name, file(fasta) from genomes
 
   output:
-    file ("run_${name}/*.{txt,tsv}") into busco_summary_results
-    file ("run_${name}/single_copy_busco_sequences_${name}.faa") into busco_single_copy_proteins
+    file "${genome_name}/short_summary*" into busco_short_summary
+    file "${genome_name}/run_*/full_table.tsv" into busco_full_summary
+    file "${genome_name}.sg.faa" into busco_single_copy_proteins
 
   shell:
     """
-    run_BUSCO.py -i ${fasta} -o ${name} -m genome -l ${BUSCOodb} --cpu ${params.busco.cpus}
-    cat run_${name}/single_copy_busco_sequences/*.faa > run_${name}/single_copy_busco_sequences_${name}.faa
+    busco -c ${task.cpus} --force --offline -m genome -i ${fasta} -o ${genome_name} -l ${params.odb_path}/${params.odb_name} >& busco.log 2>&1
+    catSingleCopyBySpecie.py -f ${genome_name}/run_${params.odb_name}/busco_sequences/single_copy_busco_sequences/ -s ${genome_name} >& catSingleCopyBySpecie.log 2>&1
     """
+
 }
 
 // Concat all single copy genes of all specie into a single file
-// process concat_busco {
-//
-//   publishDir "${params.outdir}/1-busco", mode: 'copy'
-//
-//   input:
-//     file fasta from busco_single_copy_proteins.collect()
-//
-//   output:
-//     file "single_copy_busco_sequences.fasta" into busco_single_copy_proteins_concat
-//
-//   shell:
-//     """
-//     cat ${fasta} > single_copy_busco_sequences.fasta
-//     """
-// }
+process concat_single_copy {
+
+  publishDir "${params.outdir}/${params.concatenate_sg_dirname}", mode: 'copy'
+
+  input:
+    file '*.faa' from busco_single_copy_proteins.collect()
+
+  output:
+    file "single_copy_busco_sequences.fasta" into busco_single_copy_proteins_concat
+
+  shell:
+    """
+    cat *.faa > single_copy_busco_sequences.fasta
+    """
+}
 
 // Filter in order to keep at least a minimum of X species which shared a single copy gene (give a list of sequence ID)
-// process filter_single_copy {
-//   beforeScript "${params.biopython_env}"
-//
-//   publishDir "${params.outdir}/2-single-copy", mode: 'copy'
-//
-//   input:
-//     file fasta from busco_single_copy_proteins_concat
-//
-//   output:
-//     file "*.lst" into busco_single_copy_proteins_list //mode flatten
-//     // flatten to allow parallelization at the next step
-//
-//   // add a limitation on -s option in order than it can be superior to the number of input fasta
-//   shell:
-//     """
-//     single_copies_busco.py -f ${fasta} -s params.species
-//     """
-// }
+process filter_single_copy {
+  beforeScript "${params.biopython_env}"
 
-// Extract each ortholgous sequences
-// process seqtk {
-//   beforeScript "${params.seqtk_env}"
-//
-//   publishDir "${params.outdir}/2-single-copy", mode: 'copy'
-//
-//   input:
-//     file lst from busco_single_copy_proteins_list.flatten()
-//     file fasta from busco_single_copy_proteins_concat
-//
-//   output:
-//     file "*.faa" into busco_single_copy_proteins_toMafft
-//
-//   shell:
-//     """
-//     seqtk subseq -l 70 ${fasta} ${lst} > ${lst}.faa
-//     """
-// }
+  publishDir "${params.outdir}/${params.shared_sg_dirname}", mode: 'copy'
+
+  input:
+    file fasta from busco_single_copy_proteins_concat
+
+  output:
+    file "*.faa" into busco_single_copy_proteins_shared
+
+  shell:
+    """
+    extractSharedSingleCopy.py -f ${fasta} -s ${params.min_species}
+    """
+}
 
 // Align each orthogroup
-// process mafft {
-//   beforeScript "${params.mafft_env}"
-//
-//   publishDir "${params.outdir}/3-mafft", mode: 'copy'
-//
-//   input:
-//     file faa from busco_single_copy_proteins_toMafft
-//
-//   output:
-//     file "*.mafft" into busco_single_copy_proteins_toGblocks
-//
-//   shell:
-//     """
-//     mafft --auto ${faa} > ${faa}.mafft
-//     """
-// }
+process mafft {
+  beforeScript "${params.mafft_env}"
+
+  publishDir "${params.outdir}/${params.alignment_dirname}", mode: 'copy'
+
+  input:
+    file faa from busco_single_copy_proteins_shared.flatten()
+
+  output:
+    file "*.mafft" into busco_single_copy_proteins_toGblocks
+
+  shell:
+    """
+    mafft --auto ${faa} > ${faa}.mafft
+    """
+}
 
 // Clean the alignment
-// process gblocks {
-//   // As Gblocks exit status is always 1...
-//   validExitStatus 1
-//   beforeScript "${params.gblocks_env}"
-//
-//   publishDir "${params.outdir}/4-gblocks", mode: 'copy'
-//
-//   input:
-//     file aln from busco_single_copy_proteins_toGblocks
-//
-//   output:
-//     file "*-gb" into busco_single_copy_proteins_toCleanHeader
-//
-//   script:
-//     """
-//     Gblocks ${aln} -t=p -p=n -b3=8 -b4=10 -b5=h
-//     """
-// }
+process gblocks {
+  // As Gblocks exit status is always 1...
+  validExitStatus 1
+  beforeScript "${params.gblocks_env}"
+
+  publishDir "${params.outdir}/${params.alignment_blocks_dirname}", mode: 'copy'
+
+  input:
+    file aln from busco_single_copy_proteins_toGblocks
+
+  output:
+    file "*-gb" into busco_single_copy_proteins_toCleanHeader
+
+  script:
+    """
+    Gblocks ${aln} -t=p -p=n -b3=8 -b4=10 -b5=h
+    """
+}
 
 // Clean the header for higher readability in the final tree
 // Default: EOG093001PG:NGRA.fna:NGRA000074:9808-10725
