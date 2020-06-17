@@ -31,6 +31,7 @@ def helpMessage() {
     Single copy orthologs:
     --odb_path [path]                       Path to all BUSCO ODB databases
     --odb_name [str]                        Specify the name of the BUSCO lineage to be used
+    --min_species [int]                     Keep orthologs presents in a least this minimal number of species (min:2; max: total number of species)
 
   """.stripIndent()
 }
@@ -84,17 +85,17 @@ process get_single_copy {
   label 'busco'
   beforeScript "${params.busco_env}"
 
-  publishDir "${params.outdir}/${params.assembly_completness_dirname}" , mode: 'copy', pattern : "${genome_name}/short_summary*"
-  publishDir "${params.outdir}/${params.assembly_completness_dirname}" , mode: 'copy', pattern : "${genome_name}/run_*/*.tsv" , saveAs : { full_table -> "${genome_name}/full_table.tsv" }
-  publishDir "${params.outdir}/${params.assembly_completness_dirname}" , mode: 'copy', pattern : "*.faa"
+  publishDir "${params.outdir}/${params.completness_dirname}" , mode: 'copy', pattern : "${genome_name}/short_summary*"
+  publishDir "${params.outdir}/${params.completness_dirname}" , mode: 'copy', pattern : "${genome_name}/run_*/*.tsv" , saveAs : { full_table -> "${genome_name}/full_table.tsv" }
+  publishDir "${params.outdir}/${params.completness_dirname}" , mode: 'copy', pattern : "*.faa"
 
   input:
     set genome_name, file(fasta) from genomes
 
   output:
-    file "${genome_name}/short_summary*" into busco_short_summary
-    file "${genome_name}/run_*/full_table.tsv" into busco_full_summary
-    file "${genome_name}.sg.faa" into busco_single_copy_proteins
+    file "${genome_name}/short_summary*" //into completness_short_summary
+    file "${genome_name}/run_*/full_table.tsv" //into completness_full_summary
+    file "${genome_name}.sg.faa" into single_copy_proteins
 
   shell:
     """
@@ -107,13 +108,13 @@ process get_single_copy {
 // Concat all single copy genes of all specie into a single file
 process concat_single_copy {
 
-  publishDir "${params.outdir}/${params.concatenate_sg_dirname}", mode: 'copy'
+  publishDir "${params.outdir}/${params.concatenate_dirname}", mode: 'copy'
 
   input:
-    file '*.faa' from busco_single_copy_proteins.collect()
+    file '*.faa' from single_copy_proteins.collect()
 
   output:
-    file "single_copy_busco_sequences.fasta" into busco_single_copy_proteins_concat
+    file "single_copy_busco_sequences.fasta" into cat_all_single_copy_proteins
 
   shell:
     """
@@ -125,13 +126,13 @@ process concat_single_copy {
 process filter_single_copy {
   beforeScript "${params.biopython_env}"
 
-  publishDir "${params.outdir}/${params.shared_sg_dirname}", mode: 'copy'
+  publishDir "${params.outdir}/${params.extract_shared_sg_dirname}", mode: 'copy'
 
   input:
-    file fasta from busco_single_copy_proteins_concat
+    file fasta from cat_all_single_copy_proteins
 
   output:
-    file "*.faa" into busco_single_copy_proteins_shared
+    file "*.faa" into shared_single_copy_proteins
 
   shell:
     """
@@ -146,10 +147,10 @@ process mafft {
   publishDir "${params.outdir}/${params.alignment_dirname}", mode: 'copy'
 
   input:
-    file faa from busco_single_copy_proteins_shared.flatten()
+    file faa from shared_single_copy_proteins.flatten()
 
   output:
-    file "*.mafft" into busco_single_copy_proteins_toGblocks
+    file "*.mafft" into aligned_shared_single_copy_proteins
 
   shell:
     """
@@ -163,13 +164,13 @@ process gblocks {
   validExitStatus 1
   beforeScript "${params.gblocks_env}"
 
-  publishDir "${params.outdir}/${params.alignment_blocks_dirname}", mode: 'copy'
+  publishDir "${params.outdir}/${params.cleaning_dirname}", mode: 'copy'
 
   input:
-    file aln from busco_single_copy_proteins_toGblocks
+    file aln from aligned_shared_single_copy_proteins
 
   output:
-    file "*-gb" into busco_single_copy_proteins_toCleanHeader
+    file "*-gb" into cleaned_aligned_shared_single_copy_proteins
 
   script:
     """
@@ -177,61 +178,42 @@ process gblocks {
     """
 }
 
-// Clean the header for higher readability in the final tree
-// Default: EOG093001PG:NGRA.fna:NGRA000074:9808-10725
-// Cleaned: NGRA
-// process cleanHeader {
-//   beforeScript "${params.biopython_env}"
-//
-//   publishDir "${params.outdir}/5-cat", mode: 'copy'
-//
-//   input:
-//     file gblocks from busco_single_copy_proteins_toCleanHeader
-//
-//   output:
-//     file "*.fas" into busco_single_copy_proteins_toFASconCAT
-//
-//   script:
-//     """
-//     cleanHeaderFromBuscoSG.py -f ${gblocks} > ${gblocks}.fas
-//     """
-// }
-
 // Create the matrix
-// process FASconCAT {
-//   beforeScript "${params.fasconcat_env}"
-//
-//   publishDir "${params.outdir}/5-cat", mode: 'copy'
-//
-//   input:
-//     file gblocks from busco_single_copy_proteins_toFASconCAT.collect()
-//
-//   output:
-//     file "FcC_smatrix.fas" into busco_single_copy_proteins_toProTest
-//
-//   script:
-//     """
-//     FASconCAT_v1.0.pl -s
-//     """
-// }
+process concatenation {
+  beforeScript "${params.ElConcatenero_env}"
 
-// Find the better paramters for RAxML
-// process iqtree {
-//   beforeScript "${params.iq-tree_env}"
-//
-//   publishDir "${params.outdir}/5-tree", mode: 'copy'
-//
-//   input:
-//     file matrix from busco_single_copy_proteins_toProTest
-//
-//   output:
-//     file "*.newick" into final_tree
-//
-//   script:
-//     """
-//     iqtree -s ${matrix} -bb 1000 -alrt 1000 -nt ${task.cpus}
-//     """
-// }
+  publishDir "${params.outdir}/${params.matrix_dirname}", mode: 'copy'
+
+  input:
+    file '*-gb' from cleaned_aligned_shared_single_copy_proteins.collect()
+
+  output:
+    file "*.fas" into concatenated_alignments
+
+  script:
+    """
+    ElConcatenero.py -if fasta -of fasta -in *-gb -o concatenated
+    """
+}
+
+process iqtree {
+  label 'iqtree'
+  beforeScript "${params.iqtree_env}"
+
+  publishDir "${params.outdir}/${params.tree_dirname}", mode: 'copy'
+
+  input:
+    file matrix from concatenated_alignments
+
+  output:
+    file "*.treefile" into iqtree_tree
+    file "*.iqtree" into iqtree_logs
+
+  shell:
+    """
+    iqtree -s ${matrix} -bb 1000 -alrt 1000 -nt ${task.cpus}
+    """
+}
 
 /* Other functions */
 def SeBiMERHeader() {
