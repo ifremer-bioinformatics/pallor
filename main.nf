@@ -215,6 +215,7 @@ process iqtree {
     """
 }
 
+
 /* Other functions */
 def SeBiMERHeader() {
     // Log colors ANSI codes
