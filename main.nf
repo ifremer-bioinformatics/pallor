@@ -4,7 +4,7 @@
 ========================================================================================
                           PALLOR: Phylogeny from universAL singLe cOpy oRthologs
 ========================================================================================
- CELIA Analysis Pipeline.
+ PALLOR Analysis Pipeline.
  #### Homepage / Documentation
  https://gitlab.ifremer.fr/bioinfo/pallor
 ----------------------------------------------------------------------------------------
