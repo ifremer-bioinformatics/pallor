@@ -82,8 +82,7 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 // Launch BUSCO and cat all single copy genes into a single file for each specie
 process get_single_copy {
-  label 'busco'
-  beforeScript "${params.busco_env}"
+  label 'busco_env'
 
   publishDir "${params.outdir}/${params.completness_dirname}" , mode: 'copy', pattern : "${genome_name}/short_summary*"
   publishDir "${params.outdir}/${params.completness_dirname}" , mode: 'copy', pattern : "${genome_name}/run_*/*.tsv" , saveAs : { full_table -> "${genome_name}/full_table.tsv" }
@@ -107,6 +106,7 @@ process get_single_copy {
 
 // Concat all single copy genes of all specie into a single file
 process concat_single_copy {
+  label 'pallor_env'
 
   publishDir "${params.outdir}/${params.concatenate_dirname}", mode: 'copy'
 
@@ -124,7 +124,7 @@ process concat_single_copy {
 
 // Filter in order to keep at least a minimum of X species which shared a single copy gene (give a list of sequence ID)
 process filter_single_copy {
-  beforeScript "${params.biopython_env}"
+  label 'pallor_env'
 
   publishDir "${params.outdir}/${params.extract_shared_sg_dirname}", mode: 'copy'
 
@@ -142,7 +142,7 @@ process filter_single_copy {
 
 // Align each orthogroup
 process mafft {
-  beforeScript "${params.mafft_env}"
+  label 'pallor_env'
 
   publishDir "${params.outdir}/${params.alignment_dirname}", mode: 'copy'
 
@@ -162,7 +162,7 @@ process mafft {
 process gblocks {
   // As Gblocks exit status is always 1...
   validExitStatus 1
-  beforeScript "${params.gblocks_env}"
+  label 'pallor_env'
 
   publishDir "${params.outdir}/${params.cleaning_dirname}", mode: 'copy'
 
@@ -180,7 +180,7 @@ process gblocks {
 
 // Create the matrix
 process concatenation {
-  beforeScript "${params.ElConcatenero_env}"
+  label 'pallor_env'
 
   publishDir "${params.outdir}/${params.matrix_dirname}", mode: 'copy'
 
@@ -197,8 +197,7 @@ process concatenation {
 }
 
 process iqtree {
-  label 'iqtree'
-  beforeScript "${params.iqtree_env}"
+  label 'pallor_cpus_env'
 
   publishDir "${params.outdir}/${params.tree_dirname}", mode: 'copy'
 
