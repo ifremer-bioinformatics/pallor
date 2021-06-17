@@ -4,7 +4,6 @@ channels:
   - bioconda
 dependencies:
   - biopython
-  - busco=4.0.4
   - gblocks
   - iqtree=2.0.3
   - mafft
