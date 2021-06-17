@@ -1,5 +1,0 @@
-name: busco 
-channels:
-  - bioconda
-dependencies:
-  - busco=4.0.4
