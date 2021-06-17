@@ -20,14 +20,17 @@ Steps of the workflow:
 git clone https://gitlab.ifremer.fr/bioinfo/pallor.git
 ```
 
-2. Once on DATARMOR, edit the conf/params.config file with your analysis parameters or directly using arguments
+2. Add a directory with your data (fasta files of genomes with ```.fna``` extension)
+```
 
-3. Add a directory with your data (fasta files of genomes)
+```
+
+3. Once, edit the conf/custom.config file with your analysis parameters or directly using arguments
 
 4. Run the analysis
 
 ```
-bash pallor.sh
+nextflow run main.nf -profile custom,<docker/singularity>
 ```
 
 ## License and Credits
