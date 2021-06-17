@@ -20,9 +20,31 @@ Steps of the workflow:
 git clone https://gitlab.ifremer.fr/bioinfo/pallor.git
 ```
 
-2. Add a directory with your data (fasta files of genomes with ```.fna``` extension)
+2. Add a directory with your data (fasta files of genomes with ```.fna``` extension). It should be look like:
 ```
-
+pallor/
+├── bin
+│   ├── catSingleCopyBySpecie.py
+│   └── extractSharedSingleCopy.py
+├── conf
+│   ├── base.config
+│   ├── custom.config
+│   ├── reports.config
+│   └── resources.config
+├── containers
+│   └── pallor
+│       ├── Dockerfile
+│       └── environment.yml
+├── LICENSE
+├── main.nf
+├── nextflow.config
+├── pallor.sh
+├── README.md
+└── test_data
+    ├── GCF_000091225.1_ASM9122v1_genomic.fna
+    ├── GCF_000146465.1_ASM14646v1_genomic.fna
+    ├── GCF_000277815.2_ASM27781v3_genomic.fna
+    └── GCF_000280035.1_ASM28003v2_genomic.fna
 ```
 
 3. Once, edit the conf/custom.config file with your analysis parameters or directly using arguments
