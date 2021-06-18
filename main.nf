@@ -98,6 +98,7 @@ process get_single_copy {
 
   shell:
     """
+    export AUGUSTUS_CONFIG_PATH=${params.augustus_config_path}
     busco -c ${task.cpus} --force --offline -m genome -i ${fasta} -o ${genome_name} -l ${params.odb_path}/${params.odb_name} >& busco.log 2>&1
     catSingleCopyBySpecie.py -f ${genome_name}/run_${params.odb_name}/busco_sequences/single_copy_busco_sequences/ -s ${genome_name} >& catSingleCopyBySpecie.log 2>&1
     """
