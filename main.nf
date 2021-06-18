@@ -106,7 +106,6 @@ process get_single_copy {
 
 // Concat all single copy genes of all specie into a single file
 process concat_single_copy {
-  label 'pallor_env'
 
   publishDir "${params.outdir}/${params.concatenate_dirname}", mode: 'copy'
 
@@ -124,7 +123,7 @@ process concat_single_copy {
 
 // Filter in order to keep at least a minimum of X species which shared a single copy gene (give a list of sequence ID)
 process filter_single_copy {
-  label 'pallor_env'
+  label 'biopython_env'
 
   publishDir "${params.outdir}/${params.extract_shared_sg_dirname}", mode: 'copy'
 
@@ -142,7 +141,7 @@ process filter_single_copy {
 
 // Align each orthogroup
 process mafft {
-  label 'pallor_env'
+  label 'mafft_env'
 
   publishDir "${params.outdir}/${params.alignment_dirname}", mode: 'copy'
 
@@ -162,7 +161,7 @@ process mafft {
 process gblocks {
   // As Gblocks exit status is always 1...
   validExitStatus 1
-  label 'pallor_env'
+  label 'gblocks_env'
 
   publishDir "${params.outdir}/${params.cleaning_dirname}", mode: 'copy'
 
@@ -180,7 +179,7 @@ process gblocks {
 
 // Create the matrix
 process concatenation {
-  label 'pallor_env'
+  label 'biopython_env'
 
   publishDir "${params.outdir}/${params.matrix_dirname}", mode: 'copy'
 
@@ -197,7 +196,7 @@ process concatenation {
 }
 
 process iqtree {
-  label 'pallor_cpus_env'
+  label 'iqtree_env'
 
   publishDir "${params.outdir}/${params.tree_dirname}", mode: 'copy'
 
