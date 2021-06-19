@@ -27,6 +27,45 @@ git clone https://gitlab.ifremer.fr/bioinfo/pallor.git
 
 2. Add a directory with your data (fasta files of genomes with ```.fna``` extension). It should be look like:
 
+```
+pallor/
+├── augustus
+├── bin
+├── conf
+│   ├── base.config
+│   ├── custom.config
+│   ├── reports.config
+│   └── resources.config
+├── containers
+├── LICENSE
+├── main.nf
+├── nextflow.config
+├── README.md
+└── test_data
+    ├── GCA_000738915.1_Nema_sp_1_ERTm6_V2_genomic.fna
+    ├── GCA_001432165.1_ASM143216v1_genomic.fna
+    ├── GCA_001642395.1_ASM164239v1_genomic.fna
+    ├── GCA_001642415.1_ASM164241v1_genomic.fna
+    ├── GCA_001887945.1_ASM188794v1_genomic.fna
+    ├── GCA_002081675.1_ASM208167v1_genomic.fna
+    ├── GCA_002087885.1_ASM208788v1_genomic.fna
+    ├── GCA_002087915.1_ASM208791v1_genomic.fna
+    ├── GCA_004000155.1_ASM400015v1_genomic.fna
+    ├── GCA_004325065.1_BEOM2_v1_genomic.fna
+    ├── GCA_004325075.1_ILG3_v1_genomic.fna
+    ├── GCA_014805555.1_ASM1480555v1_genomic.fna
+    ├── GCA_015832245.1_ASM1583224v1_genomic.fna
+    ├── GCF_000091225.1_ASM9122v1_genomic.fna
+    ├── GCF_000146465.1_ASM14646v1_genomic.fna
+    ├── GCF_000277815.2_ASM27781v3_genomic.fna
+    ├── GCF_000280035.1_ASM28003v2_genomic.fna
+    ├── GCF_000760515.2_UGP1.1_genomic.fna
+    ├── GCF_000803265.1_ASM80326v1_genomic.fna
+    ├── GCF_000988165.1_ASM98816v1_genomic.fna
+    └── ncbi_dataset.zip
+```
+
+
 3. Run the analysis
 
 ```
