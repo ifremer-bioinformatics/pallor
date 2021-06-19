@@ -25,7 +25,7 @@ def helpMessage() {
     Other options:
     --outdir [path]                         The output directory where the results will be saved
     -w/--work-dir                           The temporary directory where intermediate data will be saved
-    -name [str]                             Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
+    --name [str]                             Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
     --projectName [str]                     Name of the project being analyzed
 
     Single copy orthologs:
