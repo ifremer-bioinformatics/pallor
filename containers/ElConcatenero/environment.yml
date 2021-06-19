@@ -1,0 +1,9 @@
+name: pallor
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - biopython
+  - gblocks
+  - iqtree=2.0.3
+  - mafft

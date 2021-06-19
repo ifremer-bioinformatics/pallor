@@ -25,7 +25,7 @@ def helpMessage() {
     Other options:
     --outdir [path]                         The output directory where the results will be saved
     -w/--work-dir                           The temporary directory where intermediate data will be saved
-    -name [str]                             Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
+    --name [str]                             Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
     --projectName [str]                     Name of the project being analyzed
 
     Single copy orthologs:
@@ -82,8 +82,7 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 // Launch BUSCO and cat all single copy genes into a single file for each specie
 process get_single_copy {
-  label 'busco'
-  beforeScript "${params.busco_env}"
+  label 'busco_env'
 
   publishDir "${params.outdir}/${params.completness_dirname}" , mode: 'copy', pattern : "${genome_name}/short_summary*"
   publishDir "${params.outdir}/${params.completness_dirname}" , mode: 'copy', pattern : "${genome_name}/run_*/*.tsv" , saveAs : { full_table -> "${genome_name}/full_table.tsv" }
@@ -99,6 +98,7 @@ process get_single_copy {
 
   shell:
     """
+    export AUGUSTUS_CONFIG_PATH=${params.augustus_config_path}
     busco -c ${task.cpus} --force --offline -m genome -i ${fasta} -o ${genome_name} -l ${params.odb_path}/${params.odb_name} >& busco.log 2>&1
     catSingleCopyBySpecie.py -f ${genome_name}/run_${params.odb_name}/busco_sequences/single_copy_busco_sequences/ -s ${genome_name} >& catSingleCopyBySpecie.log 2>&1
     """
@@ -124,7 +124,7 @@ process concat_single_copy {
 
 // Filter in order to keep at least a minimum of X species which shared a single copy gene (give a list of sequence ID)
 process filter_single_copy {
-  beforeScript "${params.biopython_env}"
+  label 'biopython_env'
 
   publishDir "${params.outdir}/${params.extract_shared_sg_dirname}", mode: 'copy'
 
@@ -142,7 +142,7 @@ process filter_single_copy {
 
 // Align each orthogroup
 process mafft {
-  beforeScript "${params.mafft_env}"
+  label 'mafft_env'
 
   publishDir "${params.outdir}/${params.alignment_dirname}", mode: 'copy'
 
@@ -162,7 +162,7 @@ process mafft {
 process gblocks {
   // As Gblocks exit status is always 1...
   validExitStatus 1
-  beforeScript "${params.gblocks_env}"
+  label 'gblocks_env'
 
   publishDir "${params.outdir}/${params.cleaning_dirname}", mode: 'copy'
 
@@ -180,7 +180,7 @@ process gblocks {
 
 // Create the matrix
 process concatenation {
-  beforeScript "${params.ElConcatenero_env}"
+  label 'biopython_env'
 
   publishDir "${params.outdir}/${params.matrix_dirname}", mode: 'copy'
 
@@ -197,8 +197,7 @@ process concatenation {
 }
 
 process iqtree {
-  label 'iqtree'
-  beforeScript "${params.iqtree_env}"
+  label 'iqtree_env'
 
   publishDir "${params.outdir}/${params.tree_dirname}", mode: 'copy'
 
