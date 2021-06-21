@@ -1,7 +1,12 @@
+# **PALLOR: Phylogeny from universAL singLe cOpy oRthologs**
+
+[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A520.04.0-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)
+[![Run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
+[![Run with with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
+
 # Introduction
 
-PALLOR (Phylogeny from universAL singLe cOpy oRthologs) is a bioinformatics workflow used to create in a fast way phylogenetic tree from (un)annotated genomes. It can be useful for genome assembly projects when you have your draft assembly and before did any structural annotation process.
-
+PALLOR is a bioinformatics workflow used to create in a fast way phylogenetic tree from (un)annotated genomes. It can be useful for genome assembly projects when you have your draft assembly and before did any structural annotation process.
 
 Steps of the workflow:
 - Make BUSCO analysis on each genome and extract single copy genes (amino acid)
@@ -32,10 +37,10 @@ pallor/
 ├── augustus
 ├── bin
 ├── conf
-│   ├── base.config
-│   ├── custom.config
-│   ├── reports.config
-│   └── resources.config
+│   ├── base.config
+│   ├── custom.config
+│   ├── reports.config
+│   └── resources.config
 ├── containers
 ├── LICENSE
 ├── main.nf
@@ -74,16 +79,18 @@ nextflow run main.nf -profile custom,singularity
 
 ## Parameters
 
-- ```--rawdata_dir```: Path to input directory with raw data files with ```.fna``` extension [path]
-- ```--name```: Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic [str]
-- ```--projectName```: Name of the project being analyzed [str]
-- ```--odb_path```: Path to all BUSCO ODB databases [path]
-- ```--odb_name```: Specify the name of the BUSCO lineage to be used [str]
-- ```--min_species```: Keep orthologs presents in a least ```--min_species``` minimal number of species (min:2; max: total number of species) [int]
+- ```--rawdata_dir [path]```: Path to input directory with raw data files with ```.fna``` extension
+- ```--name [str]```: Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
+- ```--projectName [str]```: Name of the project being analyzed
+- ```--odb_path [path]```: Path to all BUSCO ODB databases
+- ```--odb_name [str]```: Specify the name of the BUSCO lineage to be used
+- ```--min_species [int]```: Keep orthologs presents in a least ```--min_species``` minimal number of species (min:2; max: total number of species)
+
+For ```--min_species``` be careful as low value can dramatically increase the running (many shared single copy genes, i.e. very long alignment) and high value can lead to the absence of shared single copy genes. 
 
 ## Examples
 
-- 1 - Run using Singularity on 20 microsporidia species
+- 1 - Run using Singularity on 20 microsporidia species on a local computer
 
 ```
 nextflow run main.nf -profile base,singularity --projectName run-test --rawdata_dir test_data/ --min_species 18 --odb_path /home/ref-bioinfo/tools_data/busco/v4 --odb_name microsporidia_odb10
@@ -100,6 +107,13 @@ nextflow run main.nf -profile custom,docker
 ```
 nextflow run main.nf -profile custom,docker -c /appli/bioinfo/hpc/nextflow/ifremer.config
 ```
+
+- 4 - Restart a run partially failed
+
+```
+nextflow run main.nf -resume -profile custom,docker -c /appli/bioinfo/hpc/nextflow/ifremer.config
+```
+
 
 ## License and Credits
 PALLOR is released under the GNU Affero General Public License, Version 3.0. AGPL
