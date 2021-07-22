@@ -116,7 +116,9 @@ nextflow run main.nf -resume -profile custom,docker -c /appli/bioinfo/hpc/nextfl
 
 ## Workflow process
 
-<img width="100%" src="docs/images/pallor-v0.2.0.png">
+<p align="center">
+    <img width="25%" src="docs/images/pallor-v0.2.0.png">
+</p>
 
 
 ## License and Credits
