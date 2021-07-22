@@ -114,6 +114,10 @@ nextflow run main.nf -profile custom,docker -c /appli/bioinfo/hpc/nextflow/ifrem
 nextflow run main.nf -resume -profile custom,docker -c /appli/bioinfo/hpc/nextflow/ifremer.config
 ```
 
+## Workflow process
+
+<img width="100%" src="docs/images/pallor-v0.2.0.png">
+
 
 ## License and Credits
 PALLOR is released under the GNU Affero General Public License, Version 3.0. AGPL
